@@ -1,29 +1,39 @@
 pipeline {
-    agent any
-    
-    stages{
-        stage("Code"){
-            steps{
-                git url: "https://github.com/LondheShubham153/node-todo-cicd.git", branch: "master"
+    agent {
+        label 'mynode'
+    }
+    stages {
+        stage('code') {
+            steps {
+                git url: 'https://github.com/mdkadir360/node-todo-cicd.git', branch: 'master'
             }
         }
-        stage("Build & Test"){
-            steps{
-                sh "docker build . -t node-app-test-new"
-            }
-        }
-        stage("Push to DockerHub"){
-            steps{
-                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
-                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                    sh "docker tag node-app-test-new ${env.dockerHubUser}/node-app-test-new:latest"
-                    sh "docker push ${env.dockerHubUser}/node-app-test-new:latest" 
+        stage('build and test') {
+            steps {
+                script {
+                    // Add a tag for the Docker image
+                    sh 'docker build -t mdkadir360/node-todo-app-cicd:latesst .'
                 }
             }
         }
-        stage("Deploy"){
-            steps{
-                sh "docker-compose down && docker-compose up -d"
+         stage('login and push to docker hub') {
+            steps {
+                script {
+                   echo 'loging in to doker hub and pushing the image...'
+                  withCredentials([usernamePassword(credentialsId:'docker',passwordVariable:'dockerpassword',usernameVariable:'dockerUsername')]){
+                      sh "docker login -u ${env.dockerUsername} -p ${env.dockerpassword} "
+                      sh "docker push  mdkadir360/node-todo-app-cicd:latesst"
+                  }
+                    
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                script {
+                    // Correct the typo in 'docker-compose up'
+                    sh 'docker-compose down && docker-compose up -d'
+                }
             }
         }
     }
